@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../services/location_service.dart';
 import '../offline/connectivity_service.dart';
+import '../offline/offline_storage.dart';
 
 class MapsScreen extends StatefulWidget {
   const MapsScreen({super.key});
@@ -15,6 +16,9 @@ class MapsScreen extends StatefulWidget {
 }
 
 class _MapsScreenState extends State<MapsScreen> {
+  String selectedEmergency = "Flood";
+  final OfflineStorage offlineStorage =
+    OfflineStorage();
 
   final LocationService locationService = LocationService();
 
@@ -103,6 +107,28 @@ class _MapsScreenState extends State<MapsScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+
+  onPressed: () {
+
+    offlineStorage.saveSOS(
+
+  type: selectedEmergency,
+
+  latitude: currentLocation.latitude,
+
+  longitude: currentLocation.longitude,
+
+);
+
+    print(
+      offlineStorage.getSOSList(),
+    );
+
+  },
+
+  child: const Icon(Icons.save),
+),
 
       appBar: AppBar(
         title: const Text("OpenStreetMap"),
@@ -110,6 +136,50 @@ class _MapsScreenState extends State<MapsScreen> {
 
       body: Column(
         children: [
+          Padding(
+  padding: const EdgeInsets.all(10),
+
+  child: DropdownButton<String>(
+
+    value: selectedEmergency,
+
+    isExpanded: true,
+
+    items: const [
+
+      DropdownMenuItem(
+        value: "Flood",
+        child: Text("🌊 Flood"),
+      ),
+
+      DropdownMenuItem(
+        value: "Fire",
+        child: Text("🔥 Fire"),
+      ),
+
+      DropdownMenuItem(
+        value: "Medical",
+        child: Text("🚑 Medical"),
+      ),
+
+      DropdownMenuItem(
+        value: "Earthquake",
+        child: Text("🏚 Earthquake"),
+      ),
+
+    ],
+
+    onChanged: (value) {
+
+      setState(() {
+
+        selectedEmergency = value!;
+
+      });
+
+    },
+  ),
+),
 
           // Connectivity banner
           Container(
