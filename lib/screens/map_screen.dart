@@ -1,367 +1,789 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
-class MapScreen extends StatelessWidget {
+import '../services/location_service.dart';
+import '../offline/connectivity_service.dart';
+import '../offline/offline_storage.dart';
+
+class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+
+  // =========================
+  // CONTROLLERS
+  // =========================
+
+  TextEditingController customEmergencyController =
+      TextEditingController();
+
+  // =========================
+  // SERVICES
+  // =========================
+
+  final LocationService locationService =
+      LocationService();
+
+  final ConnectivityService connectivityService =
+      ConnectivityService();
+
+  final OfflineStorage offlineStorage =
+      OfflineStorage();
+
+  final MapController mapController =
+      MapController();
+
+  // =========================
+  // VARIABLES
+  // =========================
+
+  String selectedEmergency = "Flood";
+
+  String connectionStatus = "Checking...";
+
+  bool locationLoaded = false;
+
+  List pendingSOS = [];
+
+  List<Marker> emergencyMarkers = [];
+
+  LatLng currentLocation =
+      LatLng(28.6139, 77.2090);
+
+  // =========================
+  // LOCATION
+  // =========================
+
+  Future<void> getLocation() async {
+
+    Position position =
+        await locationService.getCurrentLocation();
+
+    setState(() {
+
+      currentLocation = LatLng(
+        position.latitude,
+        position.longitude,
+      );
+
+    });
+
+    if (!locationLoaded) {
+
+      mapController.move(currentLocation, 15);
+
+      locationLoaded = true;
+    }
+  }
+
+  // =========================
+  // INTERNET CHECK
+  // =========================
+
+  Future<void> checkInitialConnection() async {
+
+    final result =
+        await Connectivity().checkConnectivity();
+
+    setState(() {
+
+      if (result.contains(
+          ConnectivityResult.none)) {
+
+        connectionStatus = "Offline";
+
+      } else {
+
+        connectionStatus = "Online";
+
+        if (pendingSOS.isNotEmpty) {
+
+          print("Syncing pending SOS...");
+        }
+      }
+    });
+  }
+
+  // =========================
+  // LOAD PENDING SOS
+  // =========================
+
+  void loadPendingSOS() {
+
+    setState(() {
+
+      pendingSOS =
+          offlineStorage.getSOSList();
+
+    });
+  }
+
+  // =========================
+  // SOS LOGIC
+  // =========================
+
+  void handleSOS() {
+
+    String emergencyType =
+        selectedEmergency == "Other"
+        ? customEmergencyController.text
+        : selectedEmergency;
+
+    if (connectionStatus == "Offline") {
+
+      offlineStorage.saveSOS(
+
+        type: emergencyType,
+
+        latitude: currentLocation.latitude,
+
+        longitude: currentLocation.longitude,
+
+      );
+
+      loadPendingSOS();
+
+      setState(() {
+
+        emergencyMarkers.add(
+
+          Marker(
+
+            point: currentLocation,
+
+            width: 80,
+            height: 80,
+
+            child: Icon(
+
+              Icons.warning,
+
+              color: getMarkerColor(
+                emergencyType,
+              ),
+
+              size: 40,
+            ),
+          ),
+        );
+
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+
+        const SnackBar(
+
+          content: Text(
+            "SOS stored offline successfully",
+          ),
+
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+    } else {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+
+        const SnackBar(
+
+          content: Text(
+            "SOS sent successfully",
+          ),
+
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  // =========================
+  // MARKER COLORS
+  // =========================
+
+  Color getMarkerColor(String type) {
+
+    switch(type) {
+
+      case "Fire":
+        return Colors.red;
+
+      case "Flood":
+        return Colors.blue;
+
+      case "Medical":
+        return Colors.green;
+
+      case "Earthquake":
+        return Colors.orange;
+
+      default:
+        return Colors.purple;
+    }
+  }
+
+  // =========================
+  // INIT
+  // =========================
+
+  @override
+  void initState() {
+    super.initState();
+
+    getLocation();
+
+    checkInitialConnection();
+
+    loadPendingSOS();
+
+    connectivityService.connectivityStream
+        .listen((result) {
+
+      setState(() {
+
+        if (result.contains(
+            ConnectivityResult.none)) {
+
+          connectionStatus = "Offline";
+
+        } else {
+
+          connectionStatus = "Online";
+
+          if (pendingSOS.isNotEmpty) {
+
+            print(
+              "Syncing pending SOS..."
+            );
+          }
+        }
+
+      });
+
+    });
+  }
+
+  // =========================
+  // UI
+  // =========================
 
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: Colors.black,
 
-      body: Center(
-        child: SizedBox(
-          width: 390,
+      backgroundColor: Colors.grey[100],
 
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+      // =====================
+      // BIG SOS BUTTON
+      // =====================
 
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+      floatingActionButton:
+          FloatingActionButton.extended(
 
-                  children: [
+        backgroundColor: Colors.red,
 
-                    // TITLE
-                    const Text(
-                      "Live Map",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+        elevation: 10,
 
-                    const SizedBox(height: 8),
+        shape: RoundedRectangleBorder(
 
-                    const Text(
-                      "Your location is being shared",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 15,
-                      ),
-                    ),
+          borderRadius:
+              BorderRadius.circular(20),
+        ),
 
-                    const SizedBox(height: 25),
+        onPressed: () {
 
-                    // MAP CONTAINER
-                    Container(
-                      height: 320,
-                      width: double.infinity,
+          handleSOS();
 
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF071B2E),
-                        borderRadius:
-                        BorderRadius.circular(30),
-                      ),
+        },
 
-                      child: Stack(
-                        children: [
+        icon: const Icon(
+          Icons.sos,
+        ),
 
-                          // GRID LINES
-                          Column(
-                            children: List.generate(
-                              6,
+        label: const Text(
 
-                                  (index) => Expanded(
-                                child: Container(
-                                  margin:
-                                  const EdgeInsets.symmetric(
-                                      vertical: 1),
+          "🚨 SEND SOS",
 
-                                  color: Colors.blue
-                                      .withOpacity(0.07),
-                                ),
-                              ),
-                            ),
-                          ),
+          style: TextStyle(
 
-                          Row(
-                            children: List.generate(
-                              6,
+            fontSize: 18,
 
-                                  (index) => Expanded(
-                                child: Container(
-                                  margin:
-                                  const EdgeInsets.symmetric(
-                                      horizontal: 1),
-
-                                  color: Colors.blue
-                                      .withOpacity(0.07),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // LOCATION GLOW
-                          Center(
-                            child: Container(
-                              height: 120,
-                              width: 120,
-
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.red
-                                        .withOpacity(0.4),
-
-                                    blurRadius: 50,
-                                    spreadRadius: 20,
-                                  ),
-                                ],
-                              ),
-
-                              child: Center(
-                                child: Container(
-                                  height: 60,
-                                  width: 60,
-
-                                  decoration:
-                                  const BoxDecoration(
-                                    color:
-                                    Color(0xFFFF2D55),
-
-                                    shape: BoxShape.circle,
-                                  ),
-
-                                  child: const Icon(
-                                    Icons.location_on,
-                                    color: Colors.white,
-                                    size: 35,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // LIVE TAG
-                          Positioned(
-                            right: 18,
-                            bottom: 18,
-
-                            child: Container(
-                              padding:
-                              const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-
-                                borderRadius:
-                                BorderRadius.circular(30),
-                              ),
-
-                              child: const Text(
-                                "LIVE",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight:
-                                  FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // LOCATION CARD
-                    Container(
-                      padding: const EdgeInsets.all(18),
-
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF111114),
-
-                        borderRadius:
-                        BorderRadius.circular(24),
-                      ),
-
-                      child: Row(
-                        children: [
-
-                          const Icon(
-                            Icons.location_on,
-                            color: Color(0xFFFF2D55),
-                          ),
-
-                          const SizedBox(width: 14),
-
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-
-                              children: const [
-
-                                Text(
-                                  "MG Road, Bengaluru",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight:
-                                    FontWeight.bold,
-
-                                    fontSize: 18,
-                                  ),
-                                ),
-
-                                SizedBox(height: 4),
-
-                                Text(
-                                  "Karnataka 560001, India",
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          Container(
-                            height: 12,
-                            width: 12,
-
-                            decoration:
-                            const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // SAFE ZONES TITLE
-                    const Text(
-                      "SAFE ZONES",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // HOME
-                    safeZoneCard(
-                      title: "Home",
-                      address:
-                      "12 Koramangala, Bengaluru",
-                      distance: "1.2 km",
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // OFFICE
-                    safeZoneCard(
-                      title: "Office",
-                      address:
-                      "Whitefield, Bengaluru",
-                      distance: "8.4 km",
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // COLLEGE
-                    safeZoneCard(
-                      title: "College",
-                      address:
-                      "AKGEC, Ghaziabad",
-                      distance: "5.1 km",
-                    ),
-
-                    const SizedBox(height: 30),
-                  ],
-                ),
-              ),
-            ),
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
-    );
-  }
 
-  Widget safeZoneCard({
-    required String title,
-    required String address,
-    required String distance,
-  }) {
+      // =====================
+      // APP BAR
+      // =====================
 
-    return Container(
-      padding: const EdgeInsets.all(18),
+      appBar: AppBar(
 
-      decoration: BoxDecoration(
-        color: const Color(0xFF111114),
+        backgroundColor: Colors.redAccent,
 
-        borderRadius:
-        BorderRadius.circular(24),
+        elevation: 8,
+
+        centerTitle: true,
+
+        title: const Text(
+          "Emergency Rescue App",
+        ),
       ),
 
-      child: Row(
+      // =====================
+      // STACK LAYOUT
+      // =====================
+
+      body: Stack(
+
         children: [
 
-          Container(
-            height: 40,
-            width: 40,
+          // =====================
+          // FULLSCREEN MAP
+          // =====================
 
-            decoration: const BoxDecoration(
-              color: Color(0xFF0F3D24),
-              shape: BoxShape.circle,
+          FlutterMap(
+
+            mapController: mapController,
+
+            options: MapOptions(
+
+              initialCenter:
+                  currentLocation,
+
+              initialZoom: 13,
             ),
 
-            child: const Icon(
-              Icons.check,
-              color: Colors.green,
-            ),
-          ),
+            children: [
 
-          const SizedBox(width: 16),
+              TileLayer(
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+                urlTemplate:
+                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
 
-              children: [
+                userAgentPackageName:
+                    'com.example.rescue_app',
+              ),
 
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+              // =====================
+              // MAP MARKERS
+              // =====================
+
+              MarkerLayer(
+
+                markers: [
+
+                  // Current location
+                  Marker(
+
+                    point: currentLocation,
+
+                    width: 80,
+                    height: 80,
+
+                    child: const Icon(
+
+                      Icons.my_location,
+
+                      color: Colors.black,
+
+                      size: 35,
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 4),
+                  // Emergency markers
+                  ...emergencyMarkers,
 
-                Text(
-                  address,
-                  style: const TextStyle(
-                    color: Colors.grey,
+                ],
+              ),
+
+            ],
+          ),
+
+          // =====================
+          // TOP FLOATING OVERLAY
+          // =====================
+
+          Positioned(
+
+            top: 15,
+            left: 15,
+            right: 15,
+
+            child: Container(
+
+              decoration: BoxDecoration(
+
+                color:
+                    Colors.black.withOpacity(0.35),
+
+                borderRadius:
+                    BorderRadius.circular(20),
+              ),
+
+              child: Column(
+
+                children: [
+
+                  // =====================
+                  // EMERGENCY DROPDOWN
+                  // =====================
+
+                  Padding(
+
+                    padding:
+                        const EdgeInsets.all(12),
+
+                    child: Card(
+
+                      elevation: 8,
+
+                      shape:
+                          RoundedRectangleBorder(
+
+                        borderRadius:
+                            BorderRadius.circular(
+                                20),
+                      ),
+
+                      child: Padding(
+
+                        padding:
+                            const EdgeInsets.all(12),
+
+                        child:
+                            DropdownButton<String>(
+
+                          value:
+                              selectedEmergency,
+
+                          isExpanded: true,
+
+                          underline:
+                              const SizedBox(),
+
+                          items: const [
+
+                            DropdownMenuItem(
+
+                              value: "Flood",
+
+                              child:
+                                  Text("🌊 Flood"),
+                            ),
+
+                            DropdownMenuItem(
+
+                              value: "Fire",
+
+                              child:
+                                  Text("🔥 Fire"),
+                            ),
+
+                            DropdownMenuItem(
+
+                              value: "Medical",
+
+                              child:
+                                  Text("🚑 Medical"),
+                            ),
+
+                            DropdownMenuItem(
+
+                              value:
+                                  "Earthquake",
+
+                              child: Text(
+                                  "🏚 Earthquake"),
+                            ),
+
+                            DropdownMenuItem(
+
+                              value: "Other",
+
+                              child:
+                                  Text("✏ Other"),
+                            ),
+
+                          ],
+
+                          onChanged: (value) {
+
+                            setState(() {
+
+                              selectedEmergency =
+                                  value!;
+
+                            });
+
+                          },
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+
+                  // =====================
+                  // CUSTOM EMERGENCY
+                  // =====================
+
+                  if (selectedEmergency ==
+                      "Other")
+
+                    Padding(
+
+                      padding:
+                          const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+
+                      child: Card(
+
+                        elevation: 8,
+
+                        shape:
+                            RoundedRectangleBorder(
+
+                          borderRadius:
+                              BorderRadius.circular(
+                                  20),
+                        ),
+
+                        child: Padding(
+
+                          padding:
+                              const EdgeInsets.all(
+                                  12),
+
+                          child: TextField(
+
+                            controller:
+                                customEmergencyController,
+
+                            decoration:
+                                const InputDecoration(
+
+                              border:
+                                  OutlineInputBorder(),
+
+                              labelText:
+                                  "Enter emergency type",
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 10),
+
+                  // =====================
+                  // CONNECTIVITY BANNER
+                  // =====================
+
+                  Container(
+
+                    margin:
+                        const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+
+                    width: double.infinity,
+
+                    padding:
+                        const EdgeInsets.all(12),
+
+                    decoration: BoxDecoration(
+
+                      gradient:
+                          connectionStatus ==
+                                  "Offline"
+
+                              ? const LinearGradient(
+                                  colors: [
+                                    Colors.red,
+                                    Colors.deepOrange,
+                                  ],
+                                )
+
+                              : const LinearGradient(
+                                  colors: [
+                                    Colors.green,
+                                    Colors.teal,
+                                  ],
+                                ),
+
+                      borderRadius:
+                          BorderRadius.circular(
+                              20),
+                    ),
+
+                    child: Text(
+
+                      connectionStatus ==
+                              "Offline"
+
+                          ? "⚠ Offline Mode - SOS will sync automatically"
+
+                          : "🟢 Online",
+
+                      style: const TextStyle(
+
+                        color: Colors.white,
+
+                        fontSize: 16,
+
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+
+                      textAlign:
+                          TextAlign.center,
+                    ),
+                  ),
+
+                ],
+              ),
             ),
           ),
 
-          Text(
-            distance,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+          // =====================
+          // FLOATING PENDING SOS
+          // =====================
+
+          Positioned(
+
+            bottom: 20,
+            left: 10,
+            right: 10,
+
+            child: SizedBox(
+
+              height: 130,
+
+              child: pendingSOS.isEmpty
+
+                  ? Card(
+
+                      elevation: 8,
+
+                      shape:
+                          RoundedRectangleBorder(
+
+                        borderRadius:
+                            BorderRadius.circular(
+                                20),
+                      ),
+
+                      child: const Center(
+
+                        child: Text(
+
+                          "No Pending SOS",
+
+                          style: TextStyle(
+
+                            fontSize: 16,
+
+                            fontWeight:
+                                FontWeight.bold,
+
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    )
+
+                  : ListView.builder(
+
+                      scrollDirection:
+                          Axis.horizontal,
+
+                      itemCount:
+                          pendingSOS.length,
+
+                      itemBuilder:
+                          (context, index) {
+
+                        final sos =
+                            pendingSOS[index];
+
+                        return SizedBox(
+
+                          width: 260,
+
+                          child: Card(
+
+                            elevation: 8,
+
+                            margin:
+                                const EdgeInsets
+                                    .all(8),
+
+                            shape:
+                                RoundedRectangleBorder(
+
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(
+                                          20),
+                            ),
+
+                            child: ListTile(
+
+                              leading:
+                                  CircleAvatar(
+
+                                backgroundColor:
+                                    Colors.red
+                                        .shade100,
+
+                                child:
+                                    const Icon(
+
+                                  Icons.warning,
+
+                                  color:
+                                      Colors.red,
+                                ),
+                              ),
+
+                              title: Text(
+
+                                sos['type'],
+
+                                style:
+                                    const TextStyle(
+
+                                  fontWeight:
+                                      FontWeight
+                                          .bold,
+
+                                  fontSize: 18,
+                                ),
+                              ),
+
+                              subtitle: Text(
+
+                                "Lat: ${sos['latitude']}\n"
+                                "Lng: ${sos['longitude']}\n"
+                                "⏳ Pending Sync",
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ),
+
         ],
       ),
     );

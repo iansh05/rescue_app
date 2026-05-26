@@ -8,14 +8,14 @@ import '../services/location_service.dart';
 import '../offline/connectivity_service.dart';
 import '../offline/offline_storage.dart';
 
-class MapsScreen extends StatefulWidget {
-  const MapsScreen({super.key});
+class MapScreen extends StatefulWidget {
+  const MapScreen({super.key});
 
   @override
-  State<MapsScreen> createState() => _MapsScreenState();
+  State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapsScreenState extends State<MapsScreen> {
+class _MapScreenState extends State<MapScreen> {
 
   // =========================
   // CONTROLLERS
