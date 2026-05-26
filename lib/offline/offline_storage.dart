@@ -18,6 +18,7 @@ class OfflineStorage {
     'latitude': latitude,
     'longitude': longitude,
     'time': DateTime.now().toString(),
+    'synced': false,
 
   });
 
