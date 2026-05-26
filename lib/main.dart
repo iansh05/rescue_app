@@ -13,7 +13,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Rescue App',
-      home: LoginScreen(),
+      home: Center(
+        child: SizedBox(
+          width: 390,
+          height: 844,
+          child: ClipRect(
+            child: LoginScreen(),
+          ),
+        ),
+      ),
     );
   }
 }
