@@ -50,6 +50,8 @@ class _MapScreenState extends State<MapScreen> {
 
   bool locationLoaded = false;
 
+  bool showPendingSOS = false;
+
   List pendingSOS = [];
 
   List<Marker> emergencyMarkers = [];
@@ -655,132 +657,219 @@ class _MapScreenState extends State<MapScreen> {
           ),
 
           // =====================
-          // FLOATING PENDING SOS
+          // EXPANDABLE PENDING SOS
           // =====================
 
           Positioned(
 
-            bottom: 20,
+            bottom: 90,
             left: 10,
             right: 10,
 
-            child: SizedBox(
+            child: Column(
 
-              height: 130,
+              crossAxisAlignment:
+                  CrossAxisAlignment.end,
 
-              child: pendingSOS.isEmpty
+              children: [
 
-                  ? Card(
+                // Toggle button
+                GestureDetector(
 
-                      elevation: 8,
+                  onTap: () {
 
-                      shape:
-                          RoundedRectangleBorder(
+                    setState(() {
 
-                        borderRadius:
-                            BorderRadius.circular(
-                                20),
-                      ),
+                      showPendingSOS =
+                          !showPendingSOS;
 
-                      child: const Center(
+                    });
 
-                        child: Text(
+                  },
 
-                          "No Pending SOS",
+                  child: Container(
+
+                    padding:
+                        const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+
+                    decoration: BoxDecoration(
+
+                      color:
+                          Colors.black.withOpacity(
+                              0.7),
+
+                      borderRadius:
+                          BorderRadius.circular(
+                              20),
+                    ),
+
+                    child: Row(
+
+                      mainAxisSize:
+                          MainAxisSize.min,
+
+                      children: [
+
+                        Icon(
+
+                          showPendingSOS
+
+                              ? Icons
+                                  .keyboard_arrow_down
+
+                              : Icons
+                                  .keyboard_arrow_up,
+
+                          color: Colors.white,
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        const Text(
+
+                          "Pending SOS",
 
                           style: TextStyle(
 
-                            fontSize: 16,
+                            color: Colors.white,
 
                             fontWeight:
                                 FontWeight.bold,
-
-                            color: Colors.grey,
                           ),
                         ),
-                      ),
-                    )
+                      ],
+                    ),
+                  ),
+                ),
 
-                  : ListView.builder(
+                const SizedBox(height: 10),
 
-                      scrollDirection:
-                          Axis.horizontal,
+                // Expandable cards
+                if (showPendingSOS)
 
-                      itemCount:
-                          pendingSOS.length,
+                  SizedBox(
 
-                      itemBuilder:
-                          (context, index) {
+                    height: 130,
 
-                        final sos =
-                            pendingSOS[index];
+                    child: pendingSOS.isEmpty
 
-                        return SizedBox(
-
-                          width: 260,
-
-                          child: Card(
+                        ? Card(
 
                             elevation: 8,
-
-                            margin:
-                                const EdgeInsets
-                                    .all(8),
 
                             shape:
                                 RoundedRectangleBorder(
 
                               borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                          20),
+                                  BorderRadius.circular(
+                                      20),
                             ),
 
-                            child: ListTile(
+                            child: const Center(
 
-                              leading:
-                                  CircleAvatar(
+                              child: Text(
 
-                                backgroundColor:
-                                    Colors.red
-                                        .shade100,
+                                "No Pending SOS",
 
-                                child:
-                                    const Icon(
+                                style: TextStyle(
 
-                                  Icons.warning,
-
-                                  color:
-                                      Colors.red,
-                                ),
-                              ),
-
-                              title: Text(
-
-                                sos['type'],
-
-                                style:
-                                    const TextStyle(
+                                  fontSize: 16,
 
                                   fontWeight:
-                                      FontWeight
-                                          .bold,
+                                      FontWeight.bold,
 
-                                  fontSize: 18,
+                                  color: Colors.grey,
                                 ),
                               ),
-
-                              subtitle: Text(
-
-                                "Lat: ${sos['latitude']}\n"
-                                "Lng: ${sos['longitude']}\n"
-                                "⏳ Pending Sync",
-                              ),
                             ),
+                          )
+
+                        : ListView.builder(
+
+                            scrollDirection:
+                                Axis.horizontal,
+
+                            itemCount:
+                                pendingSOS.length,
+
+                            itemBuilder:
+                                (context, index) {
+
+                              final sos =
+                                  pendingSOS[index];
+
+                              return SizedBox(
+
+                                width: 260,
+
+                                child: Card(
+
+                                  elevation: 8,
+
+                                  margin:
+                                      const EdgeInsets
+                                          .all(8),
+
+                                  shape:
+                                      RoundedRectangleBorder(
+
+                                    borderRadius:
+                                        BorderRadius
+                                            .circular(
+                                                20),
+                                  ),
+
+                                  child: ListTile(
+
+                                    leading:
+                                        CircleAvatar(
+
+                                      backgroundColor:
+                                          Colors.red
+                                              .shade100,
+
+                                      child:
+                                          const Icon(
+
+                                        Icons.warning,
+
+                                        color:
+                                            Colors.red,
+                                      ),
+                                    ),
+
+                                    title: Text(
+
+                                      sos['type'],
+
+                                      style:
+                                          const TextStyle(
+
+                                        fontWeight:
+                                            FontWeight
+                                                .bold,
+
+                                        fontSize: 18,
+                                      ),
+                                    ),
+
+                                    subtitle: Text(
+
+                                      "Lat: ${sos['latitude']}\n"
+                                      "Lng: ${sos['longitude']}\n"
+                                      "⏳ Pending Sync",
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+                  ),
+
+              ],
             ),
           ),
 
