@@ -1,273 +1,214 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'main_screen.dart';
 
-class LoginScreen extends StatelessWidget {
-  final TextEditingController nameController =
-    TextEditingController();
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
-
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            width: 360,
-            padding: const EdgeInsets.all(28),
-
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.05),
-              ),
-            ),
-
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF160507), Color(0xFF0A0A0C)],
+            stops: [0.0, 0.4],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-
-                // Shield Icon
+                const SizedBox(height: 40),
                 Container(
-                  height: 90,
-                  width: 90,
-
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(25),
+                    color: const Color(0xFFE52E3D),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE52E3D).withOpacity(0.3),
+                        blurRadius: 25,
+                        spreadRadius: 2,
+                      )
+                    ],
                   ),
-
-                  child: const Icon(
-                    Icons.shield,
-                    color: Colors.red,
-                    size: 50,
-                  ),
+                  child: const Icon(Icons.shield, size: 44, color: Colors.white),
                 ),
-
-                const SizedBox(height: 25),
-
-                // Title
+                const SizedBox(height: 24),
                 const Text(
                   "SENTINEL",
                   style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
                     color: Colors.white,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                const Text(
-                  "Secure Emergency Response System",
-                  textAlign: TextAlign.center,
+                Text(
+                  "YOUR SAFETY, ALWAYS ON",
                   style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: Colors.grey[500],
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
-                Container(
-  decoration: BoxDecoration(
-    color: const Color(0xFF1A1A1A),
-    borderRadius: BorderRadius.circular(14),
-
-    border: Border.all(
-      color: Colors.white12,
-    ),
-  ),
-
-  child: TextField(
-    controller: nameController,
-
-    style: const TextStyle(
-      color: Colors.white,
-    ),
-
-    decoration: const InputDecoration(
-      hintText: "Full Name",
-
-      hintStyle: TextStyle(
-        color: Colors.grey,
-      ),
-
-      border: InputBorder.none,
-
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 18,
-      ),
-    ),
-  ),
-),
-
-const SizedBox(height: 20),
-
-                // Phone Field
-                TextField(
-                  style: const TextStyle(color: Colors.white),
-
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(
-                      Icons.phone,
-                      color: Colors.grey,
-                    ),
-
-                    hintText: "Phone Number",
-                    hintStyle: const TextStyle(
-                      color: Colors.grey,
-                    ),
-
-                    filled: true,
-                    fillColor: const Color(0xFF2A2A2A),
-
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 18,
-                    ),
-                  ),
+                _buildInputField(
+                  label: "USER NAME",
+                  controller: _nameController,
+                  hint: "Priya Sharma",
+                  icon: Icons.person_outline,
                 ),
-
                 const SizedBox(height: 20),
-
-                // Password Field
-                TextField(
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.white),
-
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(
-                      Icons.lock,
-                      color: Colors.grey,
-                    ),
-
-                    suffixIcon: const Icon(
-                      Icons.visibility_off,
-                      color: Colors.grey,
-                    ),
-
-                    hintText: "Password",
-                    hintStyle: const TextStyle(
-                      color: Colors.grey,
-                    ),
-
-                    filled: true,
-                    fillColor: const Color(0xFF2A2A2A),
-
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 18,
-                    ),
-                  ),
+                _buildInputField(
+                  label: "PHONE NUMBER",
+                  controller: _phoneController,
+                  hint: "+1 (555) 000-0000",
+                  icon: Icons.phone_outlined,
                 ),
-
-                const SizedBox(height: 14),
-
-                // Forgot Password
-                const Align(
+                const SizedBox(height: 20),
+                _buildInputField(
+                  label: "PASSWORD",
+                  controller: _passwordController,
+                  hint: "••••••••",
+                  icon: Icons.lock_outline,
+                  isPassword: true,
+                ),
+                const SizedBox(height: 16),
+                Align(
                   alignment: Alignment.centerRight,
-
-                  child: Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // Sign In Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE53935),
-
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-
-                    onPressed: () {
-
-  Navigator.push(
-    context,
-
-    MaterialPageRoute(
-      builder: (context) => HomeScreen(
-  userName: nameController.text,
-),
-    ),
-  );
-
-},
-
+                  child: TextButton(
+                    onPressed: () {},
                     child: const Text(
-                      "Sign In",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                      "Forgot password?",
+                      style: TextStyle(color: Color(0xFFE52E3D), fontWeight: FontWeight.w600, fontSize: 13),
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 28),
-
-                // Biometric Login
-                Column(
-                  children: [
-
-                    const Icon(
-                      Icons.fingerprint,
-                      color: Colors.red,
-                      size: 40,
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    const Text(
-                      "Use Biometric Login",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 13,
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE52E3D),
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 8,
+                    shadowColor: const Color(0xFFE52E3D).withOpacity(0.4),
+                  ),
+                  onPressed: () {
+                    String finalName = _nameController.text.trim().isEmpty ? "Priya Sharma" : _nameController.text.trim();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MainScreen(userName: finalName),
                       ),
+                    );
+                  },
+                  child: const Text(
+                    "Sign In",
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.grey[800], thickness: 0.8)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Text("or use biometrics", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                     ),
+                    Expanded(child: Divider(color: Colors.grey[800], thickness: 0.8)),
                   ],
                 ),
-
-                const SizedBox(height: 30),
-
-                // Emergency Text
-                const Text(
-                  "In an emergency? Call 112",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF18181C),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey[900]!),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.fingerprint, color: Color(0xFFE52E3D)),
+                      const SizedBox(width: 10),
+                      Text("Fingerprint / Face ID", style: TextStyle(color: Colors.grey[200], fontWeight: FontWeight.w600)),
+                    ],
                   ),
                 ),
+                const SizedBox(height: 60),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("In an emergency? ", style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                    const Text("Call 911", style: TextStyle(color: Color(0xFFE52E3D), fontWeight: FontWeight.bold, fontSize: 13)),
+                  ],
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInputField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: isPassword,
+          style: const TextStyle(color: Colors.white, fontSize: 15),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[700], fontSize: 15),
+            filled: true,
+            fillColor: const Color(0xFF18181C),
+            prefixIcon: Icon(icon, color: Colors.grey[600], size: 20),
+            suffixIcon: isPassword ? Icon(Icons.visibility_off_outlined, color: Colors.grey[700], size: 20) : null,
+            contentPadding: const EdgeInsets.symmetric(vertical: 18),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          ),
+        ),
+      ],
     );
   }
 }

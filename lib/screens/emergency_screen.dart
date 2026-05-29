@@ -6,167 +6,131 @@ class EmergencyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        title: const Text(
-          "Emergency Services",
-          style: TextStyle(color: Colors.white),
-        ),
-        actions: [
-          Icon(Icons.notifications, color: Colors.red),
-          SizedBox(width: 15),
-        ],
-      ),
-
-      body: SingleChildScrollView(
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
-
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              // ALERT BAR
+              const Text("Emergency Services", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 4),
+              Text("Select a category to access tools", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red),
-                ),
-                child: const Row(
+                decoration: BoxDecoration(color: const Color(0xFF1C1215), borderRadius: BorderRadius.circular(12)),
+                child: Row(
                   children: [
-                    Icon(Icons.warning, color: Colors.red),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "1 active alert in your area - Cyclone warning",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                    const Icon(Icons.warning, color: Color(0xFFE52E3D), size: 16),
+                    const SizedBox(width: 8),
+                    const Text("1 active alert in your area · ", style: TextStyle(fontSize: 12, color: Colors.white)),
+                    Text("Cyclone warning in effect", style: TextStyle(color: const Color(0xFFE52E3D), fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.78,
+                  children: [
+                    _buildEmergencyCard(
+                      "Women Safety",
+                      "Fake call & companion tracking",
+                      Icons.favorite_border,
+                      Colors.purpleAccent,
+                      ["Fake incoming call", "Live companion tracking", "Discreet SOS"],
+                    ),
+                    _buildEmergencyCard(
+                      "Natural Calamity",
+                      "Alerts, routes & survival",
+                      Icons.thunderstorm_outlined,
+                      Colors.orangeAccent,
+                      ["Live weather alerts", "Evacuation routes", "Survival checklist"],
+                    ),
+                    _buildEmergencyCard(
+                      "Ambulance Support",
+                      "Medical dispatch & blood bank",
+                      Icons.add_box_outlined,
+                      Colors.greenAccent,
+                      ["One-tap dispatch", "Blood bank finder", "Medical ID share"],
+                    ),
+                    _buildEmergencyCard(
+                      "Fire Emergency",
+                      "Fire dept ping & safety guides",
+                      Icons.local_fire_department_outlined,
+                      Colors.redAccent,
+                      ["Instant fire dept ping", "Escape protocol", "Smoke safety guide"],
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              // GRID CARDS
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                childAspectRatio: 0.9,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-
-                children: [
-
-                  emergencyCard(
-                    "Women Safety",
-                    Icons.favorite,
-                    Colors.purple,
-                  ),
-
-                  emergencyCard(
-                    "Natural Calamity",
-                    Icons.cloud,
-                    Colors.orange,
-                  ),
-
-                  emergencyCard(
-                    "Ambulance Support",
-                    Icons.local_hospital,
-                    Colors.green,
-                  ),
-
-                  emergencyCard(
-                    "Fire Emergency",
-                    Icons.local_fire_department,
-                    Colors.red,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                "Quick Dial",
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-
-              const SizedBox(height: 10),
-
+              const SizedBox(height: 12),
+              Text("QUICK DIAL", style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-
-                  quickDial("101", "FIRE", Icons.local_fire_department),
-                  quickDial("108", "AMB", Icons.local_hospital),
-                  quickDial("1091", "WOMEN", Icons.woman),
-                  quickDial("112", "NATIONAL", Icons.security),
+                  _buildDialItem("101", "FIRE", Colors.redAccent),
+                  _buildDialItem("108", "AMBULANCE", Colors.greenAccent),
+                  _buildDialItem("1091", "WOMEN", Colors.purpleAccent),
+                  _buildDialItem("112", "NATIONAL", Colors.orangeAccent),
                 ],
-              ),
+              )
             ],
           ),
         ),
       ),
-
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.red,
-        unselectedItemColor: Colors.white,
-
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: "Map"),
-          BottomNavigationBarItem(icon: Icon(Icons.warning), label: "Emergency"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
-      ),
     );
   }
 
-  static Widget emergencyCard(String title, IconData icon, Color color) {
+  Widget _buildEmergencyCard(String title, String subtitle, IconData icon, Color color, List<String> points) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color),
+        color: const Color(0xFF111114),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 30),
+          Icon(icon, color: color, size: 24),
           const SizedBox(height: 10),
-          Text(title,
-              style: const TextStyle(color: Colors.white, fontSize: 16)),
-          const Spacer(),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Icon(Icons.arrow_forward_ios,
-                color: color, size: 16),
-          )
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+          const SizedBox(height: 2),
+          Text(subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 10)),
+          const SizedBox(height: 10),
+          ...points.map((p) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.circle, size: 4, color: color),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text(p, style: const TextStyle(color: Colors.grey, fontSize: 10), overflow: TextOverflow.ellipsis)),
+                  ],
+                ),
+              )),
         ],
       ),
     );
   }
 
-  static Widget quickDial(String number, String label, IconData icon) {
-    return Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: Colors.white10,
-          child: Icon(icon, color: Colors.white),
-        ),
-        const SizedBox(height: 5),
-        Text(number, style: const TextStyle(color: Colors.white)),
-        Text(label,
-            style: const TextStyle(color: Colors.grey, fontSize: 10)),
-      ],
+  Widget _buildDialItem(String number, String label, Color color) {
+    return Container(
+      width: 76,
+      height: 65,
+      decoration: BoxDecoration(color: const Color(0xFF111114), borderRadius: BorderRadius.circular(14)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(number, style: TextStyle(color: color, fontSize: 15, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 8, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }
