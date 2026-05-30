@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import '../services/safe_zone_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -10,43 +12,16 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  GoogleMapController? _mapController;
-  LatLng _currentLocation = const LatLng(12.9300, 77.6350); // Default fallback (Bengaluru)
+  LatLng _currentLocation =
+      const LatLng(12.9300, 77.6350); // Default fallback (Bengaluru)
   String _currentAddress = "Fetching live GPS location...";
   bool _isLoading = true;
+  final SafeZoneService _safeZoneService = SafeZoneService();
+
+  List<SafeZone> safeZones = [];
+  final MapController _mapController = MapController();
 
   // Custom Minimalist Dark Grid Style JSON matching your screenshot perfectly
-  final String _darkMapStyle = '''
-  [
-    {
-      "elementType": "geometry",
-      "stylers": [
-        { "color": "#0b111e" }
-      ]
-    },
-    {
-      "elementType": "labels",
-      "stylers": [
-        { "visibility": "off" }
-      ]
-    },
-    {
-      "featureType": "road",
-      "elementType": "geometry",
-      "stylers": [
-        { "color": "#121926" },
-        { "weight": 1.0 }
-      ]
-    },
-    {
-      "featureType": "water",
-      "elementType": "geometry",
-      "stylers": [
-        { "color": "#050810" }
-      ]
-    }
-  ]
-  ''';
 
   @override
   void initState() {
@@ -81,15 +56,30 @@ class _MapScreenState extends State<MapScreen> {
 
     try {
       Position position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
-      
+          locationSettings:
+              const LocationSettings(accuracy: LocationAccuracy.high));
+      safeZones = await _safeZoneService.getNearbySafeZones(
+        position.latitude,
+        position.longitude,
+      );
+
       if (mounted) {
         setState(() {
-          _currentLocation = LatLng(position.latitude, position.longitude);
-          _currentAddress = "Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}";
+          _currentLocation = LatLng(
+            position.latitude,
+            position.longitude,
+          );
+
+          _currentAddress =
+              "Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}";
+
           _isLoading = false;
         });
-        _mapController?.animateCamera(CameraUpdate.newLatLngZoom(_currentLocation, 15.0));
+
+        _mapController.move(
+          _currentLocation,
+          15,
+        );
       }
     } catch (e) {
       setState(() {
@@ -100,14 +90,19 @@ class _MapScreenState extends State<MapScreen> {
 
     // Listens for device movement changes live
     Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 5),
+      locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high, distanceFilter: 5),
     ).listen((Position position) {
       if (mounted) {
         setState(() {
           _currentLocation = LatLng(position.latitude, position.longitude);
-          _currentAddress = "Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}";
+          _mapController.move(
+            _currentLocation,
+            15,
+          );
+          _currentAddress =
+              "Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}";
         });
-        _mapController?.animateCamera(CameraUpdate.newLatLng(_currentLocation));
       }
     });
   }
@@ -123,14 +118,19 @@ class _MapScreenState extends State<MapScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              const Text("Live Map", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+              const Text("Live Map",
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
               const SizedBox(height: 4),
-              Text("Your location is being shared", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              Text("Your location is being shared",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13)),
               const SizedBox(height: 20),
-              
+
               // Map Container (Fixed size, not scrolling)
               Expanded(
-                flex: 3, 
+                flex: 3,
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -142,48 +142,70 @@ class _MapScreenState extends State<MapScreen> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      GoogleMap(
-                        initialCameraPosition: CameraPosition(target: _currentLocation, zoom: 15.0),
-                        myLocationEnabled: false,
-                        myLocationButtonEnabled: false,
-                        zoomControlsEnabled: false,
-                        onMapCreated: (controller) {
-                          _mapController = controller;
-                          _mapController?.setMapStyle(_darkMapStyle);
-                        },
-                        markers: {
-                          Marker(
-                            markerId: const MarkerId('live_location'),
-                            position: _currentLocation,
-                            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                      FlutterMap(
+                        mapController: _mapController,
+                        options: MapOptions(
+                          initialCenter: _currentLocation,
+                          initialZoom: 15,
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.example.sentinel',
                           ),
-                        },
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: _currentLocation,
+                                width: 50,
+                                height: 50,
+                                child: const Icon(
+                                  Icons.location_pin,
+                                  color: Color(0xFFE52E3D),
+                                  size: 40,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                       Positioned(
                         bottom: 16,
                         right: 16,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
-                          child: const Text("LIVE", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(8)),
+                          child: const Text("LIVE",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold)),
                         ),
                       ),
                       if (_isLoading)
                         Container(
                           color: Colors.black54,
-                          child: const Center(child: CircularProgressIndicator(color: Color(0xFFE52E3D))),
+                          child: const Center(
+                              child: CircularProgressIndicator(
+                                  color: Color(0xFFE52E3D))),
                         ),
                     ],
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Coordinates Card
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: const Color(0xFF111114), borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(
+                    color: const Color(0xFF111114),
+                    borderRadius: BorderRadius.circular(16)),
                 child: Row(
                   children: [
                     const Icon(Icons.location_on, color: Color(0xFFE52E3D)),
@@ -192,32 +214,47 @@ class _MapScreenState extends State<MapScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Current Coordinates", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                          const Text("Current Coordinates",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                           const SizedBox(height: 2),
-                          Text(_currentAddress, style: TextStyle(color: Colors.grey[600], fontSize: 11), overflow: TextOverflow.ellipsis),
+                          Text(_currentAddress,
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 11),
+                              overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     )
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Scrollable Safe Zones Section
-              Text("SAFE ZONES", style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.bold)),
+              Text("SAFE ZONES",
+                  style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Expanded(
                 flex: 2,
                 child: ListView(
                   children: [
-                    _buildSafeZoneRow("Home", "12 Koramangala, Bengaluru", "1.2 km"),
-                    const SizedBox(height: 10),
-                    _buildSafeZoneRow("Office", "Whitefield, Bengaluru", "8.4 km"),
-                    const SizedBox(height: 10),
-                    _buildSafeZoneRow("College", "Jayanagar, Bengaluru", "4.1 km"),
-                    const SizedBox(height: 10),
-                    _buildSafeZoneRow("Gym", "Indiranagar, Bengaluru", "3.0 km"),
+                    ...safeZones.map(
+                      (zone) => Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: 10,
+                        ),
+                        child: _buildSafeZoneRow(
+                          zone.name,
+                          zone.type.toUpperCase(),
+                          "Nearby",
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               )
@@ -231,7 +268,9 @@ class _MapScreenState extends State<MapScreen> {
   Widget _buildSafeZoneRow(String title, String subtitle, String distance) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFF111114), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+          color: const Color(0xFF111114),
+          borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
           const Icon(Icons.check_circle, color: Colors.green, size: 20),
@@ -240,13 +279,23 @@ class _MapScreenState extends State<MapScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14)),
                 const SizedBox(height: 2),
-                Text(subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 12), overflow: TextOverflow.ellipsis),
+                Text(subtitle,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
-          Text(distance, style: TextStyle(color: Colors.grey[400], fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(distance,
+              style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600)),
         ],
       ),
     );

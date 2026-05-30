@@ -11,13 +11,15 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+
+  bool _otpSent = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
@@ -54,7 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       )
                     ],
                   ),
-                  child: const Icon(Icons.shield, size: 44, color: Colors.white),
+                  child:
+                      const Icon(Icons.shield, size: 44, color: Colors.white),
                 ),
                 const SizedBox(height: 24),
                 const Text(
@@ -90,57 +93,94 @@ class _LoginScreenState extends State<LoginScreen> {
                   hint: "+1 (555) 000-0000",
                   icon: Icons.phone_outlined,
                 ),
-                const SizedBox(height: 20),
-                _buildInputField(
-                  label: "PASSWORD",
-                  controller: _passwordController,
-                  hint: "••••••••",
-                  icon: Icons.lock_outline,
-                  isPassword: true,
-                ),
                 const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      "Forgot password?",
-                      style: TextStyle(color: Color(0xFFE52E3D), fontWeight: FontWeight.w600, fontSize: 13),
-                    ),
+                if (_otpSent) ...[
+                  const SizedBox(height: 20),
+                  _buildInputField(
+                    label: "ENTER OTP",
+                    controller: _otpController,
+                    hint: "123456",
+                    icon: Icons.sms_outlined,
                   ),
-                ),
+                ],
                 const SizedBox(height: 16),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE52E3D),
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    minimumSize: const Size(
+                      double.infinity,
+                      56,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     elevation: 8,
                     shadowColor: const Color(0xFFE52E3D).withOpacity(0.4),
                   ),
                   onPressed: () {
-                    String finalName = _nameController.text.trim().isEmpty ? "Priya Sharma" : _nameController.text.trim();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MainScreen(userName: finalName),
-                      ),
-                    );
+                    if (!_otpSent) {
+                      setState(() {
+                        _otpSent = true;
+                      });
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Demo OTP: 123456",
+                          ),
+                        ),
+                      );
+
+                      return;
+                    }
+
+                    if (_otpController.text == "123456") {
+                      String finalName = _nameController.text.trim().isEmpty
+                          ? "Priya Sharma"
+                          : _nameController.text.trim();
+
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MainScreen(
+                            userName: finalName,
+                          ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Invalid OTP",
+                          ),
+                        ),
+                      );
+                    }
                   },
-                  child: const Text(
-                    "Sign In",
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  child: Text(
+                    _otpSent ? "Verify OTP" : "Send OTP",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    Expanded(child: Divider(color: Colors.grey[800], thickness: 0.8)),
+                    Expanded(
+                        child:
+                            Divider(color: Colors.grey[800], thickness: 0.8)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Text("or use biometrics", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                      child: Text("or use biometrics",
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 12)),
                     ),
-                    Expanded(child: Divider(color: Colors.grey[800], thickness: 0.8)),
+                    Expanded(
+                        child:
+                            Divider(color: Colors.grey[800], thickness: 0.8)),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -157,7 +197,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const Icon(Icons.fingerprint, color: Color(0xFFE52E3D)),
                       const SizedBox(width: 10),
-                      Text("Fingerprint / Face ID", style: TextStyle(color: Colors.grey[200], fontWeight: FontWeight.w600)),
+                      Text("Fingerprint / Face ID",
+                          style: TextStyle(
+                              color: Colors.grey[200],
+                              fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -165,8 +208,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("In an emergency? ", style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-                    const Text("Call 911", style: TextStyle(color: Color(0xFFE52E3D), fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text("In an emergency? ",
+                        style:
+                            TextStyle(color: Colors.grey[500], fontSize: 13)),
+                    const Text("Call 911",
+                        style: TextStyle(
+                            color: Color(0xFFE52E3D),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13)),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -190,7 +239,11 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+          style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -203,9 +256,14 @@ class _LoginScreenState extends State<LoginScreen> {
             filled: true,
             fillColor: const Color(0xFF18181C),
             prefixIcon: Icon(icon, color: Colors.grey[600], size: 20),
-            suffixIcon: isPassword ? Icon(Icons.visibility_off_outlined, color: Colors.grey[700], size: 20) : null,
+            suffixIcon: isPassword
+                ? Icon(Icons.visibility_off_outlined,
+                    color: Colors.grey[700], size: 20)
+                : null,
             contentPadding: const EdgeInsets.symmetric(vertical: 18),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none),
           ),
         ),
       ],
