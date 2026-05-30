@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'women_safety_screen.dart';
+import 'fire_emergency_screen.dart';
+import 'ambulance_screen.dart';
+import 'natural_calamity_screen.dart';
 
 class EmergencyScreen extends StatelessWidget {
   const EmergencyScreen({super.key});
@@ -6,6 +10,7 @@ class EmergencyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -24,7 +29,7 @@ class EmergencyScreen extends StatelessWidget {
                     const Icon(Icons.warning, color: Color(0xFFE52E3D), size: 16),
                     const SizedBox(width: 8),
                     const Text("1 active alert in your area · ", style: TextStyle(fontSize: 12, color: Colors.white)),
-                    Text("Cyclone warning in effect", style: TextStyle(color: const Color(0xFFE52E3D), fontWeight: FontWeight.bold, fontSize: 12)),
+                    const Text("Cyclone warning in effect", style: TextStyle(color: Color(0xFFE52E3D), fontWeight: FontWeight.bold, fontSize: 12)),
                   ],
                 ),
               ),
@@ -36,33 +41,45 @@ class EmergencyScreen extends StatelessWidget {
                   mainAxisSpacing: 16,
                   childAspectRatio: 0.78,
                   children: [
-                    _buildEmergencyCard(
-                      "Women Safety",
-                      "Fake call & companion tracking",
-                      Icons.favorite_border,
-                      Colors.purpleAccent,
-                      ["Fake incoming call", "Live companion tracking", "Discreet SOS"],
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => WomenSafetyScreen())),
+                      child: _buildEmergencyCard(
+                        "Women Safety",
+                        "Fake call & companion tracking",
+                        Icons.favorite_border,
+                        Colors.purpleAccent,
+                        ["Fake incoming call", "Live companion tracking", "Discreet SOS"],
+                      ),
                     ),
-                    _buildEmergencyCard(
-                      "Natural Calamity",
-                      "Alerts, routes & survival",
-                      Icons.thunderstorm_outlined,
-                      Colors.orangeAccent,
-                      ["Live weather alerts", "Evacuation routes", "Survival checklist"],
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => NaturalCalamityScreen())),
+                      child: _buildEmergencyCard(
+                        "Natural Calamity",
+                        "Alerts, routes & survival",
+                        Icons.thunderstorm_outlined,
+                        Colors.orangeAccent,
+                        ["Live weather alerts", "Evacuation routes", "Survival checklist"],
+                      ),
                     ),
-                    _buildEmergencyCard(
-                      "Ambulance Support",
-                      "Medical dispatch & blood bank",
-                      Icons.add_box_outlined,
-                      Colors.greenAccent,
-                      ["One-tap dispatch", "Blood bank finder", "Medical ID share"],
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AmbulanceScreen())),
+                      child: _buildEmergencyCard(
+                        "Ambulance Support",
+                        "Medical dispatch & blood bank",
+                        Icons.add_box_outlined,
+                        Colors.greenAccent,
+                        ["One-tap dispatch", "Blood bank finder", "Medical ID share"],
+                      ),
                     ),
-                    _buildEmergencyCard(
-                      "Fire Emergency",
-                      "Fire dept ping & safety guides",
-                      Icons.local_fire_department_outlined,
-                      Colors.redAccent,
-                      ["Instant fire dept ping", "Escape protocol", "Smoke safety guide"],
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FireEmergencyScreen())),
+                      child: _buildEmergencyCard(
+                        "Fire Emergency",
+                        "Fire dept ping & safety guides",
+                        Icons.local_fire_department_outlined,
+                        Colors.redAccent,
+                        ["Instant fire dept ping", "Escape protocol", "Smoke safety guide"],
+                      ),
                     ),
                   ],
                 ),

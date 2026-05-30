@@ -115,42 +115,42 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000), 
+      backgroundColor: const Color(0xFF000000),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER ROW
+              // Header
               const Text("Live Map", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 4),
               Text("Your location is being shared", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
               const SizedBox(height: 20),
               
-              // EXPANDED BLUEPRINT MAP CONTAINER
+              // Map Container (Fixed size, not scrolling)
               Expanded(
+                flex: 3, 
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0A0F1D), // Deep dark void background matching your grid
+                    color: const Color(0xFF0A0F1D),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: Colors.white.withOpacity(0.05)),
                   ),
-                  clipBehavior: Clip.antiAlias, 
+                  clipBehavior: Clip.antiAlias,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       GoogleMap(
                         initialCameraPosition: CameraPosition(target: _currentLocation, zoom: 15.0),
-                        myLocationEnabled: false, // Turn off native blue dot to custom render the red glowing pin
+                        myLocationEnabled: false,
                         myLocationButtonEnabled: false,
                         zoomControlsEnabled: false,
                         onMapCreated: (controller) {
                           _mapController = controller;
-                          _mapController?.setMapStyle(_darkMapStyle); // Injects clean dark theme lines
+                          _mapController?.setMapStyle(_darkMapStyle);
                         },
-                        // Custom vector markers array
                         markers: {
                           Marker(
                             markerId: const MarkerId('live_location'),
@@ -159,8 +159,6 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         },
                       ),
-                      
-                      // Precise placement of the live badge directly over the map canvas
                       Positioned(
                         bottom: 16,
                         right: 16,
@@ -170,7 +168,6 @@ class _MapScreenState extends State<MapScreen> {
                           child: const Text("LIVE", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                         ),
                       ),
-
                       if (_isLoading)
                         Container(
                           color: Colors.black54,
@@ -180,9 +177,10 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
               ),
+              
               const SizedBox(height: 16),
               
-              // CURRENT ADDRESS / COORDINATES CARD
+              // Coordinates Card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: const Color(0xFF111114), borderRadius: BorderRadius.circular(16)),
@@ -203,19 +201,25 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
               ),
+              
               const SizedBox(height: 24),
               
-              // SAFE ZONES CARDS
+              // Scrollable Safe Zones Section
               Text("SAFE ZONES", style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              Column(
-                children: [
-                  _buildSafeZoneRow("Home", "12 Koramangala, Bengaluru", "1.2 km"),
-                  const SizedBox(height: 10),
-                  _buildSafeZoneRow("Office", "Whitefield, Bengaluru", "8.4 km"),
-                  const SizedBox(height: 10),
-                  _buildSafeZoneRow("College", "Jayanagar, Bengaluru", "4.1 km"),
-                ],
+              Expanded(
+                flex: 2,
+                child: ListView(
+                  children: [
+                    _buildSafeZoneRow("Home", "12 Koramangala, Bengaluru", "1.2 km"),
+                    const SizedBox(height: 10),
+                    _buildSafeZoneRow("Office", "Whitefield, Bengaluru", "8.4 km"),
+                    const SizedBox(height: 10),
+                    _buildSafeZoneRow("College", "Jayanagar, Bengaluru", "4.1 km"),
+                    const SizedBox(height: 10),
+                    _buildSafeZoneRow("Gym", "Indiranagar, Bengaluru", "3.0 km"),
+                  ],
+                ),
               )
             ],
           ),

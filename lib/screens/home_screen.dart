@@ -27,76 +27,79 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Good evening,", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                      const SizedBox(height: 4),
-                      Text(widget.userName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                    ],
-                  ),
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(color: Color(0xFF18181C), shape: BoxShape.circle),
-                    child: const Icon(Icons.notifications_none, color: Colors.white),
-                  )
-                ],
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF111114),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey[900]!),
-                ),
-                child: Row(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      _isSosSent ? Icons.check_circle : Icons.shield_outlined,
-                      color: _isSosSent ? Colors.green : const Color(0xFFE52E3D),
-                    ),
-                    const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_isSosSent ? "SOS is active" : "You are safe", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        Text(_isSosSent ? "Alert message broadcasted" : "Location shared with 3 contacts", style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                        Text("Good evening,", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        const SizedBox(height: 4),
+                        Text(widget.userName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
                       ],
                     ),
-                    const Spacer(),
-                    Text("LIVE", style: TextStyle(color: _isSosSent ? Colors.green : const Color(0xFFE52E3D), fontWeight: FontWeight.bold, fontSize: 12))
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(color: Color(0xFF18181C), shape: BoxShape.circle),
+                      child: const Icon(Icons.notifications_none, color: Colors.white),
+                    )
                   ],
                 ),
-              ),
-              const SizedBox(height: 40),
-              Center(
-                child: Text(
-                  _isSosSent ? "SOS SENT SUCCESSFULLY" : "HOLD TO ACTIVATE SOS",
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF111114),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey[900]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isSosSent ? Icons.check_circle : Icons.shield_outlined,
+                        color: _isSosSent ? Colors.green : const Color(0xFFE52E3D),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_isSosSent ? "SOS is active" : "You are safe", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          Text(_isSosSent ? "Alert message broadcasted" : "Location shared with 3 contacts", style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                        ],
+                      ),
+                      const Spacer(),
+                      Text("LIVE", style: TextStyle(color: _isSosSent ? Colors.green : const Color(0xFFE52E3D), fontWeight: FontWeight.bold, fontSize: 12))
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Center(
+                const SizedBox(height: 40),
+                Center(
+                  child: Text(
+                    _isSosSent ? "SOS SENT SUCCESSFULLY" : "HOLD TO ACTIVATE SOS",
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // Replaced Expanded with a fixed-height container for the scrollable view
+                Center(
                   child: GestureDetector(
                     onTap: _toggleSos,
                     child: Container(
                       width: 200,
                       height: 200,
-                      padding: const EdgeInsets.all(20), // Keeps code safe from edge bleeding
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: _isSosSent ? Colors.green : const Color(0xFFE52E3D),
                         shape: BoxShape.circle,
@@ -108,8 +111,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       child: Center(
-                        // FittedBox ensures that the text automatically auto-shrinks 
-                        // if required to remain perfectly center bounded inside circle
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
@@ -122,31 +123,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-              ),
-              Text("QUICK ACTIONS", style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildQuickAction(Icons.location_on_outlined, "SHARE LOCATION", const Color(0xFFE52E3D)),
-                  _buildQuickAction(Icons.phone_in_talk_outlined, "FAKE CALL", Colors.purpleAccent),
-                  _buildQuickAction(Icons.mic_none_outlined, "RECORD AUDIO", Colors.orangeAccent),
-                  _buildQuickAction(Icons.videocam_outlined, "RECORD VIDEO", Colors.cyanAccent),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Text("RECENT ACTIVITY", style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              _buildActivityRow("Location shared with Anjali", "2m ago", const Color(0xFFE52E3D)),
-              const SizedBox(height: 8),
-              _buildActivityRow("Check-in completed", "1h ago", Colors.green),
-            ],
+                const SizedBox(height: 40),
+                Text("QUICK ACTIONS", style: TextStyle(color: Colors.grey[500], fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildQuickAction(Icons.location_on_outlined, "SHARE LOCATION", const Color(0xFFE52E3D)),
+                    _buildQuickAction(Icons.phone_in_talk_outlined, "FAKE CALL", Colors.purpleAccent),
+                    _buildQuickAction(Icons.mic_none_outlined, "RECORD AUDIO", Colors.orangeAccent),
+                    _buildQuickAction(Icons.videocam_outlined, "RECORD VIDEO", Colors.cyanAccent),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Text("RECENT ACTIVITY", style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                _buildActivityRow("Location shared with Anjali", "2m ago", const Color(0xFFE52E3D)),
+                const SizedBox(height: 8),
+                _buildActivityRow("Check-in completed", "1h ago", Colors.green),
+                const SizedBox(height: 20), // Added padding at bottom for better scrolling
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
   Widget _buildQuickAction(IconData icon, String label, Color color) {
     return Container(
       width: 76,
