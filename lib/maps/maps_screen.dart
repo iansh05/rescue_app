@@ -16,29 +16,21 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-
   // =========================
   // CONTROLLERS
   // =========================
 
-  TextEditingController customEmergencyController =
-      TextEditingController();
+  TextEditingController customEmergencyController = TextEditingController();
 
   // =========================
   // SERVICES
   // =========================
 
-  final LocationService locationService =
-      LocationService();
+  final LocationService locationService = LocationService();
 
-  final ConnectivityService connectivityService =
-      ConnectivityService();
+  final ConnectivityService connectivityService = ConnectivityService();
 
-  final OfflineStorage offlineStorage =
-      OfflineStorage();
-
-  final MapController mapController =
-      MapController();
+  final MapController mapController = MapController();
 
   // =========================
   // VARIABLES
@@ -52,30 +44,24 @@ class _MapScreenState extends State<MapScreen> {
 
   List pendingSOS = [];
 
-  LatLng currentLocation =
-      LatLng(28.6139, 77.2090);
+  LatLng currentLocation = LatLng(28.6139, 77.2090);
 
   // =========================
   // LOCATION
   // =========================
 
   Future<void> getLocation() async {
-
-    Position position =
-        await locationService.getCurrentLocation();
+    Position position = await locationService.getCurrentLocation();
 
     setState(() {
-
       currentLocation = LatLng(
         position.latitude,
         position.longitude,
       );
-
     });
 
     // Move map only once
     if (!locationLoaded) {
-
       mapController.move(currentLocation, 15);
 
       locationLoaded = true;
@@ -87,26 +73,17 @@ class _MapScreenState extends State<MapScreen> {
   // =========================
 
   Future<void> checkInitialConnection() async {
-
-    final result =
-        await Connectivity().checkConnectivity();
+    final result = await Connectivity().checkConnectivity();
 
     setState(() {
-
-      if (result.contains(
-          ConnectivityResult.none)) {
-
+      if (result.contains(ConnectivityResult.none)) {
         connectionStatus = "Offline";
-
       } else {
-
         connectionStatus = "Online";
         if (pendingSOS.isNotEmpty) {
-
-  print("Syncing pending SOS...");
-}
+          print("Syncing pending SOS...");
+        }
       }
-
     });
   }
 
@@ -115,12 +92,8 @@ class _MapScreenState extends State<MapScreen> {
   // =========================
 
   void loadPendingSOS() {
-
     setState(() {
-
-      pendingSOS =
-          offlineStorage.getSOSList();
-
+      pendingSOS = OfflineStorage.getSOSList();
     });
   }
 
@@ -129,30 +102,21 @@ class _MapScreenState extends State<MapScreen> {
   // =========================
 
   void handleSOS() {
-
-    String emergencyType =
-        selectedEmergency == "Other"
+    String emergencyType = selectedEmergency == "Other"
         ? customEmergencyController.text
         : selectedEmergency;
 
     if (connectionStatus == "Offline") {
-
-      offlineStorage.saveSOS(
-
+      OfflineStorage.saveSOS(
         type: emergencyType,
-
         latitude: currentLocation.latitude,
-
         longitude: currentLocation.longitude,
-
       );
 
       loadPendingSOS();
 
       print("SOS stored locally");
-
     } else {
-
       print("SOS sent to server");
     }
   }
@@ -162,9 +126,7 @@ class _MapScreenState extends State<MapScreen> {
   // =========================
 
   Color getMarkerColor(String type) {
-
-    switch(type) {
-
+    switch (type) {
       case "Fire":
         return Colors.red;
 
@@ -196,30 +158,18 @@ class _MapScreenState extends State<MapScreen> {
 
     loadPendingSOS();
 
-    connectivityService.connectivityStream
-        .listen((result) {
-
+    connectivityService.connectivityStream.listen((result) {
       setState(() {
-
-        if (result.contains(
-            ConnectivityResult.none)) {
-
+        if (result.contains(ConnectivityResult.none)) {
           connectionStatus = "Offline";
-
         } else {
-
           connectionStatus = "Online";
 
           if (pendingSOS.isNotEmpty) {
-
-            print(
-              "Syncing pending SOS..."
-            );
+            print("Syncing pending SOS...");
           }
         }
-
       });
-
     });
   }
 
@@ -229,81 +179,55 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
-      floatingActionButton:
-          FloatingActionButton(
-
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
-
           handleSOS();
-
         },
-
         child: const Icon(Icons.save),
       ),
-
       appBar: AppBar(
         title: const Text(
           "Emergency Rescue App",
         ),
       ),
-
       body: Column(
         children: [
-
           // =====================
           // EMERGENCY DROPDOWN
           // =====================
 
           Padding(
             padding: const EdgeInsets.all(10),
-
             child: DropdownButton<String>(
-
               value: selectedEmergency,
-
               isExpanded: true,
-
               items: const [
-
                 DropdownMenuItem(
                   value: "Flood",
                   child: Text("🌊 Flood"),
                 ),
-
                 DropdownMenuItem(
                   value: "Fire",
                   child: Text("🔥 Fire"),
                 ),
-
                 DropdownMenuItem(
                   value: "Medical",
                   child: Text("🚑 Medical"),
                 ),
-
                 DropdownMenuItem(
                   value: "Earthquake",
                   child: Text("🏚 Earthquake"),
                 ),
-
                 DropdownMenuItem(
                   value: "Other",
                   child: Text("✏ Other"),
                 ),
-
               ],
-
               onChanged: (value) {
-
                 setState(() {
-
-                  selectedEmergency =
-                      value!;
-
+                  selectedEmergency = value!;
                 });
-
               },
             ),
           ),
@@ -313,26 +237,15 @@ class _MapScreenState extends State<MapScreen> {
           // =====================
 
           if (selectedEmergency == "Other")
-
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: 10,
               ),
-
               child: TextField(
-
-                controller:
-                    customEmergencyController,
-
-                decoration:
-                    const InputDecoration(
-
-                  labelText:
-                      "Enter emergency type",
-
-                  border:
-                      OutlineInputBorder(),
+                controller: customEmergencyController,
+                decoration: const InputDecoration(
+                  labelText: "Enter emergency type",
+                  border: OutlineInputBorder(),
                 ),
               ),
             ),
@@ -344,31 +257,18 @@ class _MapScreenState extends State<MapScreen> {
           // =====================
 
           Container(
-
             width: double.infinity,
-
-            padding:
-                const EdgeInsets.all(10),
-
-            color:
-                connectionStatus == "Offline"
-                ? Colors.red
-                : Colors.green,
-
+            padding: const EdgeInsets.all(10),
+            color: connectionStatus == "Offline" ? Colors.red : Colors.green,
             child: Text(
-
               connectionStatus == "Offline"
-
                   ? "⚠ Offline Mode - SOS will sync automatically"
-
                   : "🟢 Online",
-
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
-
               textAlign: TextAlign.center,
             ),
           ),
@@ -378,30 +278,20 @@ class _MapScreenState extends State<MapScreen> {
           // =====================
 
           SizedBox(
-
             height: 120,
-
             child: ListView.builder(
-
               itemCount: pendingSOS.length,
-
-              itemBuilder:
-                  (context, index) {
-
-                final sos =
-                    pendingSOS[index];
+              itemBuilder: (context, index) {
+                final sos = pendingSOS[index];
 
                 return ListTile(
-
                   leading: const Icon(
                     Icons.warning,
                     color: Colors.red,
                   ),
-
                   title: Text(
                     sos['type'],
                   ),
-
                   subtitle: Text(
                     "Lat: ${sos['latitude']}\n"
                     "Lng: ${sos['longitude']}\n"
@@ -417,29 +307,16 @@ class _MapScreenState extends State<MapScreen> {
           // =====================
 
           Expanded(
-
             child: FlutterMap(
-
-              mapController:
-                  mapController,
-
+              mapController: mapController,
               options: MapOptions(
-
-                initialCenter:
-                    currentLocation,
-
+                initialCenter: currentLocation,
                 initialZoom: 13,
               ),
-
               children: [
-
                 TileLayer(
-
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-
-                  userAgentPackageName:
-                      'com.example.rescue_app',
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.rescue_app',
                 ),
 
                 // =====================
@@ -447,54 +324,36 @@ class _MapScreenState extends State<MapScreen> {
                 // =====================
 
                 MarkerLayer(
-
                   markers: [
-
                     Marker(
-
                       point: currentLocation,
-
                       width: 80,
                       height: 80,
-
                       child: Icon(
-
                         // Different icons
                         selectedEmergency == "Fire"
-
                             ? Icons.local_fire_department
-
                             : selectedEmergency == "Flood"
-
                                 ? Icons.water
-
                                 : selectedEmergency == "Medical"
-
                                     ? Icons.medical_services
-
                                     : selectedEmergency == "Earthquake"
-
                                         ? Icons.warning
-
                                         : Icons.report_problem,
 
                         // Different colors
-                        color:
-                            getMarkerColor(
+                        color: getMarkerColor(
                           selectedEmergency,
                         ),
 
                         size: 40,
                       ),
                     ),
-
                   ],
                 ),
-
               ],
             ),
           ),
-
         ],
       ),
     );

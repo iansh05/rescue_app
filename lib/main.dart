@@ -4,11 +4,14 @@ import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Hive safely for the map & app state local storage
   await Hive.initFlutter();
-  await Hive.openBox('settings'); // Opens the box required by your pages
-  
+  await Hive.openBox('settings');
+  // Opens the box required by your pages
+  await Hive.openBox('sosBox');
+  await Hive.openBox('contactsBox');
+
   runApp(const SentinelApp());
 }
 
@@ -41,7 +44,8 @@ class MobileResponsiveWrapper extends StatelessWidget {
       color: Colors.black, // Background fill behind device chassis mock
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 450), // Standard Phone Width max
+          constraints:
+              const BoxConstraints(maxWidth: 450), // Standard Phone Width max
           child: child,
         ),
       ),

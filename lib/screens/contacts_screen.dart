@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/contact_service.dart';
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
@@ -8,13 +9,13 @@ class ContactsScreen extends StatefulWidget {
 }
 
 class _ContactsScreenState extends State<ContactsScreen> {
-  List<Map<String, String>> contacts = [];
+  List get contacts => ContactService.getContacts();
 
-  void _addContact() {
+  Future<void> _addContact() async {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -52,15 +53,17 @@ class _ContactsScreenState extends State<ContactsScreen> {
               child: const Text("Cancel"),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (nameController.text.isNotEmpty &&
                     phoneController.text.isNotEmpty) {
-                  setState(() {
-                    contacts.add({
-                      "name": nameController.text,
-                      "phone": phoneController.text,
-                    });
-                  });
+                  await ContactService.addContact(
+                    name: nameController.text.trim(),
+                    phone: phoneController.text.trim(),
+                  );
+
+                  if (mounted) {
+                    setState(() {});
+                  }
 
                   Navigator.pop(context);
                 }
@@ -102,7 +105,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       Text(
                         "${contacts.length} contacts will be alerted on SOS",
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: Colors.grey,
                           fontSize: 13,
                         ),
                       ),
@@ -160,16 +163,77 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   ),
                 )
               else
-                ...contacts.map(
-                  (contact) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildContactCard(
-                      contact["name"]!,
-                      contact["phone"]!,
-                      Colors.redAccent,
-                      contact["name"]![0].toUpperCase(),
-                    ),
-                  ),
+                ...contacts.asMap().entries.map(
+                  (entry) {
+                    final index = entry.key;
+                    final contact = entry.value;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF111114),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.05),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.redAccent,
+                              radius: 24,
+                              child: Text(
+                                contact["name"][0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    contact["name"],
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    contact["phone"],
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.red,
+                              ),
+                              onPressed: () async {
+                                await ContactService.deleteContact(index);
+
+                                if (mounted) {
+                                  setState(() {});
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               const SizedBox(height: 32),
               Text(
@@ -181,74 +245,25 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildHelplineRow("National Emergency", "112"),
-              _buildHelplineRow("Women Helpline", "1091"),
-              _buildHelplineRow("Police", "100"),
-              _buildHelplineRow("Ambulance", "108"),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContactCard(
-    String name,
-    String relation,
-    Color color,
-    String initial,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111114),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
-        ),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: color,
-            radius: 24,
-            child: Text(
-              initial,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              _buildHelplineRow(
+                "National Emergency",
+                "112",
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+              _buildHelplineRow(
+                "Women Helpline",
+                "1091",
               ),
-              const SizedBox(height: 4),
-              Text(
-                relation,
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 12,
-                ),
+              _buildHelplineRow(
+                "Police",
+                "100",
+              ),
+              _buildHelplineRow(
+                "Ambulance",
+                "108",
               ),
             ],
           ),
-          const Spacer(),
-          const Icon(
-            Icons.phone_outlined,
-            color: Color(0xFFE52E3D),
-            size: 22,
-          ),
-        ],
+        ),
       ),
     );
   }
