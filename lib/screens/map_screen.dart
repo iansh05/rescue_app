@@ -3,6 +3,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/safe_zone_service.dart';
+import '../offline/offline_storage.dart';
+import '../services/sync_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -20,13 +24,72 @@ class _MapScreenState extends State<MapScreen> {
 
   List<SafeZone> safeZones = [];
   final MapController _mapController = MapController();
+  String connectionStatus = "Checking...";
+  List pendingSOS = [];
+  void loadPendingSOS() {
+    setState(() {
+      pendingSOS = OfflineStorage.getSOSList();
+    });
+  }
+
+  Future<void> checkConnection() async {
+    final result = await Connectivity().checkConnectivity();
+
+    if (result.contains(ConnectivityResult.none)) {
+      setState(() {
+        connectionStatus = "Offline";
+      });
+    } else {
+      setState(() {
+        connectionStatus = "Online";
+      });
+
+      if (pendingSOS.isNotEmpty) {
+        await SyncService.syncPendingSOS();
+      }
+    }
+  }
+
+  Future<void> createSOS() async {
+    await OfflineStorage.saveSOS(
+      type: "Emergency",
+      latitude: _currentLocation.latitude,
+      longitude: _currentLocation.longitude,
+    );
+
+    loadPendingSOS();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("SOS Stored Successfully"),
+        ),
+      );
+    }
+  }
+
+  Future<void> openNavigation(
+    double lat,
+    double lng,
+  ) async {
+    await launchUrl(
+      Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+      ),
+    );
+  }
 
   // Custom Minimalist Dark Grid Style JSON matching your screenshot perfectly
 
   @override
   void initState() {
     super.initState();
+
     _determinePosition();
+
+    loadPendingSOS();
+
+    checkConnection();
   }
 
   Future<void> _determinePosition() async {
@@ -110,6 +173,11 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFFE52E3D),
+        onPressed: createSOS,
+        child: const Icon(Icons.sos),
+      ),
       backgroundColor: const Color(0xFF000000),
       body: SafeArea(
         child: Padding(
@@ -164,6 +232,40 @@ class _MapScreenState extends State<MapScreen> {
                                   Icons.location_pin,
                                   color: Color(0xFFE52E3D),
                                   size: 40,
+                                ),
+                              ),
+                              ...safeZones.map(
+                                (zone) => Marker(
+                                  point: LatLng(
+                                    zone.latitude,
+                                    zone.longitude,
+                                  ),
+                                  width: 40,
+                                  height: 40,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          title: Text(zone.name),
+                                          content: Text(zone.type),
+                                        ),
+                                      );
+                                    },
+                                    child: Icon(
+                                      zone.type == "hospital"
+                                          ? Icons.local_hospital
+                                          : zone.type == "police"
+                                              ? Icons.local_police
+                                              : Icons.local_fire_department,
+                                      color: zone.type == "hospital"
+                                          ? Colors.green
+                                          : zone.type == "police"
+                                              ? Colors.blue
+                                              : Colors.orange,
+                                      size: 30,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -231,13 +333,45 @@ class _MapScreenState extends State<MapScreen> {
               ),
 
               const SizedBox(height: 24),
+              if (pendingSOS.isNotEmpty)
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    itemCount: pendingSOS.length,
+                    itemBuilder: (context, index) {
+                      final sos = pendingSOS[index];
+
+                      return ListTile(
+                        leading: const Icon(
+                          Icons.warning,
+                          color: Colors.red,
+                        ),
+                        title: Text(
+                          sos['type'],
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          "Pending Sync",
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
 
               // Scrollable Safe Zones Section
-              Text("SAFE ZONES",
-                  style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold)),
+              Text(
+                "SAFE ZONES",
+                style: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 12),
               Expanded(
                 flex: 2,
@@ -248,10 +382,18 @@ class _MapScreenState extends State<MapScreen> {
                         padding: const EdgeInsets.only(
                           bottom: 10,
                         ),
-                        child: _buildSafeZoneRow(
-                          zone.name,
-                          zone.type.toUpperCase(),
-                          "Nearby",
+                        child: GestureDetector(
+                          onTap: () {
+                            openNavigation(
+                              zone.latitude,
+                              zone.longitude,
+                            );
+                          },
+                          child: _buildSafeZoneRow(
+                            zone.name,
+                            zone.type.toUpperCase(),
+                            "Nearby",
+                          ),
                         ),
                       ),
                     ),

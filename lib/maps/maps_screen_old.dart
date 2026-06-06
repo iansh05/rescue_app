@@ -7,6 +7,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../services/location_service.dart';
 import '../offline/connectivity_service.dart';
 import '../offline/offline_storage.dart';
+import '../services/sync_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -75,16 +76,19 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> checkInitialConnection() async {
     final result = await Connectivity().checkConnectivity();
 
-    setState(() {
-      if (result.contains(ConnectivityResult.none)) {
+    if (result.contains(ConnectivityResult.none)) {
+      setState(() {
         connectionStatus = "Offline";
-      } else {
+      });
+    } else {
+      setState(() {
         connectionStatus = "Online";
-        if (pendingSOS.isNotEmpty) {
-          print("Syncing pending SOS...");
-        }
+      });
+
+      if (pendingSOS.isNotEmpty) {
+        await SyncService.syncPendingSOS();
       }
-    });
+    }
   }
 
   // =========================
@@ -166,7 +170,7 @@ class _MapScreenState extends State<MapScreen> {
           connectionStatus = "Online";
 
           if (pendingSOS.isNotEmpty) {
-            print("Syncing pending SOS...");
+            SyncService.syncPendingSOS();
           }
         }
       });

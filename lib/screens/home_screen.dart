@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Required for physical hardware device vibrations
+// Required for physical hardware device vibrations
 import '../services/sos_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,11 +13,41 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isSosSent = false;
 
-  void _toggleSos() async {
+  Future<void> _toggleSos() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Send SOS"),
+        content: const Text(
+          "Emergency contacts will be notified.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+            },
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            child: const Text("Send"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     try {
       final sosService = SOSService();
 
-      await sosService.triggerSOS("Emergency");
+      await sosService.triggerSOS(
+        "Emergency",
+      );
+
+      if (!mounted) return;
 
       setState(() {
         _isSosSent = true;
@@ -25,13 +55,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("SOS saved successfully"),
+          content: Text(
+            "SOS saved successfully",
+          ),
         ),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Failed: $e"),
+          content: Text(
+            "Failed: $e",
+          ),
         ),
       );
     }
