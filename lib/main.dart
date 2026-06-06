@@ -28,7 +28,9 @@ class SentinelApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0A0A0C),
         primaryColor: const Color(0xFFE52E3D),
       ),
-      home: const MobileResponsiveWrapper(child: LoginScreen()),
+      home: const MobileResponsiveWrapper(
+        child: LoginScreen(),
+      ),
     );
   }
 }

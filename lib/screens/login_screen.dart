@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
+import '../authority/screens/authority_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -202,6 +203,41 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: Colors.grey[200],
                               fontWeight: FontWeight.w600)),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(
+                      Icons.security,
+                      color: Color(0xFFE52E3D),
+                    ),
+                    label: const Text(
+                      "Authority Login",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: Colors.grey[800]!,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      backgroundColor: const Color(0xFF18181C),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AuthorityLoginScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 60),
