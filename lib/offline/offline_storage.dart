@@ -17,7 +17,9 @@ class OfflineStorage {
     });
   }
 
-  static Future<void> saveSOSRequest(Map<String, dynamic> sos) async {
+  static Future<void> saveSOSRequest(
+    Map<String, dynamic> sos,
+  ) async {
     await sosBox.add(sos);
   }
 
@@ -27,5 +29,17 @@ class OfflineStorage {
 
   static List getAllSOS() {
     return sosBox.values.toList();
+  }
+
+  static Future<void> markAsSynced(
+    int index,
+  ) async {
+    final sos = Map<String, dynamic>.from(
+      sosBox.getAt(index),
+    );
+
+    sos['synced'] = true;
+
+    await sosBox.putAt(index, sos);
   }
 }

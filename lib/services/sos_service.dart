@@ -4,6 +4,7 @@ import '../offline/offline_storage.dart';
 import 'package:uuid/uuid.dart';
 import 'contact_service.dart';
 import 'sms_service.dart';
+import 'package:rescue_app/services/sos_api_service.dart';
 
 class SOSService {
   Future<void> triggerSOS(String type) async {
@@ -36,6 +37,18 @@ class SOSService {
       );
 
       print("SOS SAVED");
+
+// Send to backend
+      final backendSuccess = await SOSApiService.createSOS(
+        citizenId: sos.id,
+        type: sos.type,
+        latitude: sos.latitude,
+        longitude: sos.longitude,
+      );
+
+      print(
+        "BACKEND RESPONSE: $backendSuccess",
+      );
 
       final contacts = ContactService.getContacts();
 
