@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/login_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Hive safely for the map & app state local storage
   await Hive.initFlutter();
+  await NotificationService.initialize();
   await Hive.openBox('settings');
   // Opens the box required by your pages
   await Hive.openBox('sosBox');
@@ -23,6 +26,15 @@ class SentinelApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sentinel',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('hi'),
+      ],
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF0A0A0C),

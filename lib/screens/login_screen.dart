@@ -84,14 +84,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildInputField(
                   label: "USER NAME",
                   controller: _nameController,
-                  hint: "Priya Sharma",
+                  hint: "Enter your name",
                   icon: Icons.person_outline,
                 ),
                 const SizedBox(height: 20),
                 _buildInputField(
                   label: "PHONE NUMBER",
                   controller: _phoneController,
-                  hint: "+1 (555) 000-0000",
+                  hint: "+91 9876543210",
                   icon: Icons.phone_outlined,
                 ),
                 const SizedBox(height: 16),

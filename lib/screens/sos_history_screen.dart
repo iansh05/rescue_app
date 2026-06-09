@@ -36,7 +36,9 @@ class SOSHistoryScreen extends StatelessWidget {
               subtitle: Text(
                 "Time: ${sos['time'] ?? sos['timestamp'] ?? ''}\n"
                 "Latitude: ${sos['latitude'] ?? 'N/A'}\n"
-                "Longitude: ${sos['longitude'] ?? 'N/A'}",
+                "Longitude: ${sos['longitude'] ?? 'N/A'}\n"
+                "Status: ${sos['status'] ?? 'PENDING'}\n"
+                "Last Sync: ${sos['syncedAt'] ?? 'Not Synced'}",
               ),
               trailing: Container(
                 padding: const EdgeInsets.symmetric(
@@ -50,7 +52,7 @@ class SOSHistoryScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  sos['synced'] == true ? "Synced" : "Pending",
+                  sos['synced'] == true ? "Synced" : "Pending Sync",
                   style: TextStyle(
                     color: sos['synced'] == true
                         ? Colors.green.shade800

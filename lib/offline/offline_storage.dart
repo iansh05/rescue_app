@@ -20,6 +20,8 @@ class OfflineStorage {
   static Future<void> saveSOSRequest(
     Map<String, dynamic> sos,
   ) async {
+    sos['synced'] ??= false;
+
     await sosBox.add(sos);
   }
 
@@ -39,6 +41,7 @@ class OfflineStorage {
     );
 
     sos['synced'] = true;
+    sos['syncedAt'] = DateTime.now().toIso8601String();
 
     await sosBox.putAt(index, sos);
   }

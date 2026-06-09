@@ -1,5 +1,6 @@
 import '../offline/offline_storage.dart';
 import 'sos_api_service.dart';
+import '../constants/sos_status.dart';
 
 class SyncService {
   static Future<void> syncPendingSOS() async {
@@ -8,11 +9,11 @@ class SyncService {
     for (int i = 0; i < sosList.length; i++) {
       final sos = sosList[i];
 
-      if (sos['synced'] == false || sos['status'] == 'pending') {
+      if (sos['synced'] != true) {
         print("SYNCING SOS: $sos");
 
         try {
-          final success = await SOSApiService.createSOS(
+          final backendSosId = await SOSApiService.createSOS(
             citizenId: sos['id']?.toString() ??
                 DateTime.now().millisecondsSinceEpoch.toString(),
             type: sos['type']?.toString() ?? "Emergency",
@@ -20,7 +21,7 @@ class SyncService {
             longitude: (sos['longitude'] ?? 0).toDouble(),
           );
 
-          if (success) {
+          if (backendSosId != null) {
             await OfflineStorage.markAsSynced(i);
 
             print(

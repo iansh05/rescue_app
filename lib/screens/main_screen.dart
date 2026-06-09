@@ -28,7 +28,9 @@ class _MainScreenState extends State<MainScreen> {
       const EmergencyScreen(),
       const ContactsScreen(),
       const SOSHistoryScreen(),
-      const ProfileScreen(),
+      ProfileScreen(
+        userName: widget.userName,
+      ),
     ];
   }
 

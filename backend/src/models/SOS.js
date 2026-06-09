@@ -16,6 +16,10 @@ const sosSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    audioUrl: {
+  type: String,
+  default: null,
+},
 
     emergencyType: {
       type: String,

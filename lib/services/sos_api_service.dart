@@ -1,7 +1,8 @@
 import './api_service.dart';
+import 'dart:convert';
 
 class SOSApiService {
-  static Future<bool> createSOS({
+  static Future<String?> createSOS({
     required String citizenId,
     required String type,
     required double latitude,
@@ -21,10 +22,16 @@ class SOSApiService {
         },
       );
 
-      return response.statusCode == 201;
+      if (response.statusCode == 201) {
+        final json = jsonDecode(response.body);
+
+        return json["data"]["_id"];
+      }
+
+      return null;
     } catch (e) {
       print("API ERROR: $e");
-      return false;
+      return null;
     }
   }
 }

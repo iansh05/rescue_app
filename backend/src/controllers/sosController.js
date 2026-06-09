@@ -3,6 +3,49 @@ const SOS = require("../models/SOS");
 // Create SOS
 const createSOS = async (req, res) => {
   try {
+    const {
+      citizenId,
+      emergencyType,
+      latitude,
+      longitude,
+    } = req.body;
+
+    if (!citizenId) {
+      return res.status(400).json({
+        success: false,
+        message: "Citizen ID is required",
+      });
+    }
+
+    if (!emergencyType) {
+      return res.status(400).json({
+        success: false,
+        message: "Emergency type is required",
+      });
+    }
+
+    if (
+  latitude === undefined ||
+  latitude === null ||
+  isNaN(latitude)
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Latitude is invalid",
+  });
+}
+
+if (
+  longitude === undefined ||
+  longitude === null ||
+  isNaN(longitude)
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Longitude is invalid",
+  });
+}
+
     const sos = await SOS.create(req.body);
 
     res.status(201).json({
@@ -22,19 +65,42 @@ const getAllSOS = async (req, res) => {
   try {
     const filter = {};
 
-    if (req.query.status) {
-      filter.status = req.query.status;
-    }
+if (req.query.status) {
+  filter.status = req.query.status;
+}
 
-    const sosList = await SOS.find(filter).sort({
-      createdAt: -1,
-    });
+if (req.query.citizenId) {
+  filter.citizenId =
+    req.query.citizenId;
+}
 
-    res.status(200).json({
-      success: true,
-      count: sosList.length,
-      data: sosList,
-    });
+    const page =
+  parseInt(req.query.page) || 1;
+
+const limit =
+  parseInt(req.query.limit) || 20;
+
+const skip =
+  (page - 1) * limit;
+
+const total =
+  await SOS.countDocuments(filter);
+
+const sosList = await SOS.find(filter)
+  .sort({
+    createdAt: -1,
+  })
+  .skip(skip)
+  .limit(limit);
+
+res.status(200).json({
+  success: true,
+  page,
+  limit,
+  total,
+  count: sosList.length,
+  data: sosList,
+});
   } catch (error) {
     res.status(500).json({
       success: false,

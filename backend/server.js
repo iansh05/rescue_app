@@ -28,3 +28,15 @@ app.listen(PORT, () => {
     `Server running on port ${PORT}`
   );
 });
+const audioRoutes =
+require(
+ "./src/routes/audioRoutes"
+);
+app.use(
+ "/api/sos",
+ audioRoutes
+);
+app.use(
+ "/uploads",
+ express.static("uploads")
+);

@@ -5,9 +5,10 @@ import 'package:uuid/uuid.dart';
 import 'contact_service.dart';
 import 'sms_service.dart';
 import 'package:rescue_app/services/sos_api_service.dart';
+import '../constants/sos_status.dart';
 
 class SOSService {
-  Future<void> triggerSOS(String type) async {
+  Future<String?> triggerSOS(String type) async {
     try {
       print("TRIGGER SOS CALLED");
 
@@ -28,7 +29,7 @@ class SOSService {
         type: type,
         latitude: position.latitude,
         longitude: position.longitude,
-        status: "pending",
+        status: SOSStatus.pending,
         timestamp: DateTime.now(),
       );
 
@@ -39,7 +40,7 @@ class SOSService {
       print("SOS SAVED");
 
 // Send to backend
-      final backendSuccess = await SOSApiService.createSOS(
+      final backendSosId = await SOSApiService.createSOS(
         citizenId: sos.id,
         type: sos.type,
         latitude: sos.latitude,
@@ -47,7 +48,7 @@ class SOSService {
       );
 
       print(
-        "BACKEND RESPONSE: $backendSuccess",
+        "BACKEND SOS ID: $backendSosId",
       );
 
       final contacts = ContactService.getContacts();
@@ -83,10 +84,14 @@ Need help immediately.
       print(
         OfflineStorage.getAllSOS(),
       );
+
+      return backendSosId ?? sos.id;
     } catch (e) {
       print(
         "SOS ERROR: $e",
       );
+
+      return null;
     }
   }
 }

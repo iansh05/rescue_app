@@ -54,19 +54,65 @@ class _ContactsScreenState extends State<ContactsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (nameController.text.isNotEmpty &&
-                    phoneController.text.isNotEmpty) {
-                  await ContactService.addContact(
-                    name: nameController.text.trim(),
-                    phone: phoneController.text.trim(),
+                final name = nameController.text.trim();
+                final phone = phoneController.text.trim();
+
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Name is required"),
+                    ),
                   );
-
-                  if (mounted) {
-                    setState(() {});
-                  }
-
-                  Navigator.pop(context);
+                  return;
                 }
+
+                if (phone.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Phone number is required"),
+                    ),
+                  );
+                  return;
+                }
+
+                final phoneRegex = RegExp(r'^[0-9]{10}$');
+
+                if (!phoneRegex.hasMatch(phone)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "Enter a valid 10-digit phone number",
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                final alreadyExists = contacts.any(
+                  (contact) => contact['phone'] == phone,
+                );
+
+                if (alreadyExists) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "This contact already exists",
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                await ContactService.addContact(
+                  name: name,
+                  phone: phone,
+                );
+
+                if (!mounted) return;
+
+                setState(() {});
+
+                Navigator.pop(context);
               },
               child: const Text("Save"),
             ),

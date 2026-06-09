@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 // Required for physical hardware device vibrations
 import '../services/sos_service.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:record/record.dart';
+
+import '../services/location_service.dart';
+import 'package:path_provider/path_provider.dart';
+
+import '../services/audio_upload_service.dart';
+import 'fake_call_screen.dart';
+import '../services/contact_service.dart';
+
+import 'dart:math';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -12,6 +23,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isSosSent = false;
+
+  final AudioRecorder _audioRecorder = AudioRecorder();
+
+  bool _isRecording = false;
 
   Future<void> _toggleSos() async {
     final confirm = await showDialog<bool>(
@@ -43,9 +58,21 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final sosService = SOSService();
 
-      await sosService.triggerSOS(
+      final sosId = await sosService.triggerSOS(
         "Emergency",
       );
+      if (sosId != null) {
+        await _recordEmergencyAudio().then(
+          (audioPath) async {
+            if (audioPath == null) return;
+
+            await AudioUploadService().uploadAudio(
+              sosId,
+              audioPath,
+            );
+          },
+        );
+      }
 
       if (!mounted) return;
 
@@ -71,6 +98,139 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _shareLocation() async {
+    try {
+      final locationService = LocationService();
+
+      final position = await locationService.getCurrentLocation();
+
+      final mapsUrl =
+          "https://maps.google.com/?q=${position.latitude},${position.longitude}";
+
+      await Share.share(
+        "Emergency Location:\n$mapsUrl",
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Unable to share location: $e"),
+        ),
+      );
+    }
+  }
+
+  Future<void> _toggleAudioRecording() async {
+    try {
+      if (!_isRecording) {
+        final dir = await getApplicationDocumentsDirectory();
+
+        final path =
+            '${dir.path}/recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+        await _audioRecorder.start(
+          const RecordConfig(),
+          path: path,
+        );
+        setState(() {
+          _isRecording = true;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Recording started"),
+          ),
+        );
+      } else {
+        final path = await _audioRecorder.stop();
+
+        setState(() {
+          _isRecording = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Audio saved:\n$path"),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Recording failed: $e"),
+        ),
+      );
+    }
+  }
+
+  Future<String?> _recordEmergencyAudio() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+
+      final path =
+          '${dir.path}/sos_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+      await _audioRecorder.start(
+        const RecordConfig(),
+        path: path,
+      );
+
+      await Future.delayed(
+        const Duration(seconds: 10),
+      );
+
+      final recordedPath = await _audioRecorder.stop();
+
+      return recordedPath;
+    } catch (e) {
+      debugPrint(
+        'Emergency recording failed: $e',
+      );
+
+      return null;
+    }
+  }
+
+  Future<void> _fakeCall() async {
+    final contacts = ContactService.getContacts();
+
+    if (contacts.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("No emergency contacts found"),
+        ),
+      );
+      return;
+    }
+
+    final contact = contacts[Random().nextInt(contacts.length)];
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("${contact['name']} is calling..."),
+      ),
+    );
+
+    await Future.delayed(
+      const Duration(seconds: 3),
+    );
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FakeCallScreen(
+          callerName: contact['name'],
+          callerNumber: contact['phone'],
+        ),
+      ),
+    );
   }
 
   @override
@@ -214,16 +374,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildQuickAction(Icons.location_on_outlined,
-                        "SHARE LOCATION", const Color(0xFFE52E3D)),
-                    _buildQuickAction(Icons.phone_in_talk_outlined, "FAKE CALL",
-                        Colors.purpleAccent),
-                    _buildQuickAction(Icons.mic_none_outlined, "RECORD AUDIO",
-                        Colors.orangeAccent),
-                    _buildQuickAction(Icons.videocam_outlined, "RECORD VIDEO",
-                        Colors.cyanAccent),
+                    _buildQuickAction(
+                      Icons.location_on_outlined,
+                      "SHARE LOCATION",
+                      const Color(0xFFE52E3D),
+                    ),
+                    _buildQuickAction(
+                      Icons.phone_in_talk_outlined,
+                      "FAKE CALL",
+                      Colors.purpleAccent,
+                    ),
+                    _buildQuickAction(
+                      Icons.mic_none_outlined,
+                      "RECORD AUDIO",
+                      Colors.orangeAccent,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -247,25 +414,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildQuickAction(IconData icon, String label, Color color) {
-    return Container(
-      width: 76,
-      height: 85,
-      decoration: BoxDecoration(
+  Widget _buildQuickAction(
+    IconData icon,
+    String label,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        if (label == "SHARE LOCATION") {
+          _shareLocation();
+        } else if (label == "RECORD AUDIO") {
+          _toggleAudioRecording();
+        } else if (label == "FAKE CALL") {
+          _fakeCall();
+        }
+      },
+      child: Container(
+        width: 76,
+        height: 85,
+        decoration: BoxDecoration(
           color: const Color(0xFF111114),
-          borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text(label,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: color,
+              size: 22,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold)),
-        ],
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
